@@ -5,14 +5,17 @@ from typing import Literal, cast
 
 import cairo
 import gi
+
+# Ensure GI versions are declared before importing modules
+gi.require_version("Gtk", "3.0")
+gi.require_version("Gdk", "3.0")
+
 from gi.repository import Gdk, GObject, Gtk
 from loguru import logger
 
 from fabric.core.service import Property
 from fabric.utils.helpers import extract_css_values, get_enum_member
 from fabric.widgets.window import Window
-
-gi.require_version("Gtk", "3.0")
 
 try:
     gi.require_version("GtkLayerShell", "0.1")
@@ -54,9 +57,8 @@ class Edge(GObject.GEnum):
 
 class WaylandWindow(Window):
     @Property(
-        Layer,
+        object,
         flags="read-write",
-        default_value=Layer.TOP,
     )
     def layer(self) -> Layer:  # type: ignore
         return self._layer  # type: ignore
@@ -123,9 +125,8 @@ class WaylandWindow(Window):
         return
 
     @Property(
-        KeyboardMode,
+        object,
         "read-write",
-        default_value=KeyboardMode.NONE,
     )
     def keyboard_mode(self) -> KeyboardMode:
         return self._keyboard_mode
@@ -203,26 +204,8 @@ class WaylandWindow(Window):
             GtkLayerShell.set_margin(self, edge, mrgv)
         return
 
-    @Property(object, "read-write")
-    def keyboard_mode(self):
-        kb_mode = GtkLayerShell.get_keyboard_mode(self)
-        if GtkLayerShell.get_keyboard_interactivity(self):
-            kb_mode = KeyboardMode.EXCLUSIVE
-        return kb_mode
-
-    @keyboard_mode.setter
-    def keyboard_mode(
-        self,
-        value: Literal["none", "exclusive", "on-demand"] | KeyboardMode,
-    ):
-        return GtkLayerShell.set_keyboard_mode(
-            self,
-            get_enum_member(
-                KeyboardMode,
-                value,
-                default=KeyboardMode.NONE,
-            ),
-        )
+    # NOTE: Removed duplicate keyboard_mode property that conflicted with the
+    # enum-typed property above. The setter/getter above handle this property.
 
     def __init__(
         self,

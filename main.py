@@ -47,6 +47,24 @@ for log in [
 if __name__ == "__main__":
     setproctitle.setproctitle(APP_NAME)
 
+    # Ensure GTK can initialize (avoid crash in headless/non-GUI sessions)
+    try:
+        gi.require_version("Gtk", "3.0")
+        from gi.repository import Gtk
+
+        ok, _ = Gtk.init_check()
+        if not ok:
+            logger.error(
+                "GTK initialization failed. Ensure a Wayland/X11 session is available."
+            )
+            raise SystemExit(0)
+    except Exception:
+        # If Gtk isn't available at all, exit gracefully with a clear message
+        logger.error(
+            "GTK not available. Install GTK3 and run inside a graphical session."
+        )
+        raise SystemExit(0)
+
     # Load configuration
     from config.data import load_config
 

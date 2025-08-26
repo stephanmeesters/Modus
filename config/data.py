@@ -2,10 +2,13 @@ import json
 import os
 
 import gi
+
+# Ensure GI versions are declared before importing modules
+gi.require_version("Gtk", "3.0")
+gi.require_version("Gdk", "3.0")
+
 from fabric.utils.helpers import get_relative_path
 from gi.repository import Gdk, GLib
-
-gi.require_version("Gtk", "3.0")
 
 APP_NAME = "modus"
 APP_NAME_CAP = "Modus"
@@ -43,15 +46,26 @@ def parse_timeout_string(timeout_str):
 
 CACHE_DIR = str(GLib.get_user_cache_dir()) + f"/{APP_NAME}"
 
-USERNAME = os.getlogin()
+try:
+    USERNAME = os.getlogin()
+except Exception:
+    # Fallback for environments where getlogin() is unavailable
+    import getpass
+
+    USERNAME = getpass.getuser()
 HOSTNAME = os.uname().nodename
 HOME_DIR = os.path.expanduser("~")
 
 CONFIG_DIR = os.path.expanduser(f"~/.config/{APP_NAME}")
 
 screen = Gdk.Screen.get_default()
-CURRENT_WIDTH = screen.get_width()
-CURRENT_HEIGHT = screen.get_height()
+if screen is not None:
+    CURRENT_WIDTH = screen.get_width()
+    CURRENT_HEIGHT = screen.get_height()
+else:
+    # Headless or no display; provide sensible defaults and allow override via env
+    CURRENT_WIDTH = int(os.environ.get("MODUS_SCREEN_WIDTH", "1920"))
+    CURRENT_HEIGHT = int(os.environ.get("MODUS_SCREEN_HEIGHT", "1080"))
 
 
 WALLPAPERS_DIR_DEFAULT = get_relative_path("../assets/wallpapers_example/")
